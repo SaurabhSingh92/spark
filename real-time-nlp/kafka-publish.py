@@ -1,5 +1,6 @@
+import random
 import time
-
+from faker import Faker
 import tweepy
 from kafka import KafkaProducer
 from json import dumps
@@ -28,8 +29,23 @@ def search_tweet():
     producer.flush()
 
 
+def fake_date():
+    fake = Faker()
+    data = {}
+    for i in range(0, 5):
+        data[i] = {}
+        data[i]['id'] = random.randint(0, 5)
+        data[i]['name'] = fake.name()
+        data[i]['city'] = fake.city()
+        data[i]['country'] = fake.country()
+        producer.send('twitter', data[i])
+    print(data)
+    producer.flush()
+
+
 if __name__ == '__main__':
     while True:
         print("Publish new tweets: ")
-        search_tweet()
+        # search_tweet()
+        fake_date()
         time.sleep(30)
