@@ -38,7 +38,7 @@ def fake_date():
         data[i]['name'] = fake.name()
         data[i]['city'] = fake.city()
         data[i]['country'] = fake.country()
-        producer.send('twitter', data[i])
+        producer.send('sample', data[i])
     print(data)
     producer.flush()
 
