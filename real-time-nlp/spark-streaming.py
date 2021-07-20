@@ -1,27 +1,28 @@
-
 from pyspark.sql import SparkSession
-from pyspark.streaming import StreamingContext
 import json
 
-
-
 if __name__ == '__main__':
-
 
     spark = SparkSession.builder. \
         master('local[*]'). \
         appName('Kafka_tweet_sentiment').getOrCreate()
 
-    sc = StreamingContext(spark, 10)
-
     spark.sparkContext.setLogLevel("WARN")
 
-    df = spark.readStream. \
-        format("kafka") \
+    print("Starting the read")
+
+    df = spark.readStream.format("kafka") \
+        .option('partition.assignment.strategy', 'range').option("auto.offset.reset", 'largest')\
         .option("kafka.bootstrap.servers", "localhost:9092") \
-        .option('subscribe', 'twitter')\
+        .option('subscribe', 'sample').option("group.id", "test").option("startingOffsets", 'latest')\
         .load()
 
-    df2=df.selectExpr("CAST(value AS STRING)")
+    new=df.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
-    df2.writeStream.format("console").outputMode("append").start()
+    print(f"Read is streaming: \b{df.isStreaming}")
+
+    new.writeStream.trigger(processingTime='5 seconds').outputMode("append").format("console")\
+        .option("truncate", 'false') \
+        .start().awaitTermination()
+
+
