@@ -48,4 +48,4 @@ if __name__ == '__main__':
         print("Publish new tweets: ")
         # search_tweet()
         fake_date()
-        time.sleep(30)
+        time.sleep(5)

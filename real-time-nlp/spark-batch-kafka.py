@@ -16,9 +16,8 @@ if __name__ == '__main__':
 
     df = spark.readStream.format("kafka") \
         .option("kafka.bootstrap.servers", "localhost:9092") \
-        .option('subscribe', 'sample')\
-        .option("partition.assignment.strategy", "range")\
-        .option("startingOffsets", 'latest')\
+        .option('subscribe', 'twitter')\
+        .option("startingOffsets", 'earliest')\
         .load()
 
     df.printSchema()
@@ -27,8 +26,8 @@ if __name__ == '__main__':
         .add("name", StringType()).add("city", StringType()).add("country", StringType())
 
     query = df.selectExpr("CAST(value AS STRING)")\
-        .select(from_json("value", schema).alias("address"))\
-        .select("address.*")\
+        .select(from_json("value", schema).alias("tweet"))\
+        .select("tweet.*")\
         .writeStream\
         .format("console") \
         .outputMode("append").trigger(processingTime='5 seconds')\
