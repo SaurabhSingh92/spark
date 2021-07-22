@@ -1,7 +1,13 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json
-from pyspark.sql.types import StructType, IntegerType, StringType
+from pyspark.sql.functions import from_json, col, udf
+from pyspark.sql.types import StructType, IntegerType, StringType, DateType, TimestampType
+from nltk.sentiment import SentimentIntensityAnalyzer
 import json
+
+def sentance_analyze(sent):
+    score = SentimentIntensityAnalyzer()
+    points = score.polarity_scores(f"{sent}")
+    return points['compound']
 
 if __name__ == '__main__':
 
@@ -16,19 +22,26 @@ if __name__ == '__main__':
 
     df = spark.readStream.format("kafka") \
         .option("kafka.bootstrap.servers", "localhost:9092") \
-        .option('subscribe', 'sample')\
+        .option('subscribe', 'tweet')\
         .option("partition.assignment.strategy", "range")\
         .option("startingOffsets", 'latest')\
         .load()
 
     df.printSchema()
 
-    schema = StructType().add("id", IntegerType())\
+    fake_schema = StructType().add("id", IntegerType())\
         .add("name", StringType()).add("city", StringType()).add("country", StringType())
 
-    query = df.selectExpr("CAST(value AS STRING)")\
-        .select(from_json("value", schema).alias("address"))\
-        .select("address.*")\
+    tweet_schema = StructType().add("id", StringType()).add("tweet", StringType())\
+        .add("Creation_date", StringType()).add("UserName", StringType())
+
+    score = udf(lambda v: sentance_analyze(v), StringType())
+
+    df = df.selectExpr("CAST(value AS STRING)")\
+        .select(from_json("value", tweet_schema).alias("tweet"))\
+        .select("tweet.*").withColumn("Score", score('tweet'))
+
+    query = df\
         .writeStream\
         .format("console") \
         .outputMode("append").trigger(processingTime='5 seconds')\

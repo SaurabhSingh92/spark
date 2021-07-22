@@ -15,7 +15,7 @@ api = tweepy.API(auth)
 
 
 def search_tweet():
-    search_result = api.search(q='Corona', lang='en', rpp=10)
+    search_result = api.search(q='Corona', lang='en', rpp=1)
 
     for tweet in search_result:
         data = tweet._json
@@ -25,7 +25,7 @@ def search_tweet():
             'Creation_date': data['created_at'],
             'UserName': data['user']['name']
         }
-        producer.send('twitter', tw)
+        producer.send('tweet', tw)
     producer.flush()
 
 
@@ -46,6 +46,6 @@ def fake_date():
 if __name__ == '__main__':
     while True:
         print("Publish new tweets: ")
-        # search_tweet()
-        fake_date()
+        search_tweet()
+        # fake_date()
         time.sleep(5)
