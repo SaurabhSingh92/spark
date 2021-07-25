@@ -5,6 +5,7 @@ import tweepy
 from kafka import KafkaProducer
 from json import dumps
 import config as conf
+from datetime import datetime
 
 auth = tweepy.OAuthHandler(conf.api_key, conf.api_secret)
 auth.set_access_token(conf.access_token, conf.access_token_secret)
@@ -15,7 +16,7 @@ api = tweepy.API(auth)
 
 
 def search_tweet():
-    search_result = api.search(q='Corona', lang='en', rpp=1)
+    search_result = api.search(q='Olympic', lang='en', rpp=1)
 
     for tweet in search_result:
         data = tweet._json
@@ -25,7 +26,8 @@ def search_tweet():
             'Creation_date': data['created_at'],
             'UserName': data['user']['name']
         }
-        producer.send('tweet', tw)
+        print(tw)
+        producer.send('twitter', tw)
     producer.flush()
 
 
@@ -48,4 +50,4 @@ if __name__ == '__main__':
         print("Publish new tweets: ")
         search_tweet()
         # fake_date()
-        time.sleep(5)
+        time.sleep(30)
